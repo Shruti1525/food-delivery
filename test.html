@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Search</title>
+</head>
+<body>
+    <input type="text" id="searchInput" placeholder="Search..." oninput="search()">
+    
+    <div id="results"></div>
+
+    <script>
+    function search() {
+    fetch('search.json')
+        .then(response => response.json())
+        .then(searchData => {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+
+            if (!searchData || !Array.isArray(searchData)) {
+                console.error('Invalid search data:', searchData);
+                resultsContainer.innerHTML = '<p>Error loading data.</p>';
+                return;
+            }
+
+            if (searchInput.trim() === '') {
+                return;
+            }
+
+            const matchingResults = searchData.filter(item => {
+                const titleMatch = item.title.toLowerCase().includes(searchInput);
+                const contentMatch = item.content.toLowerCase().includes(searchInput);
+                return titleMatch || contentMatch;
+            });
+
+            if (matchingResults.length > 0) {
+                matchingResults.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    const snippetIndex = result.content.toLowerCase().indexOf(searchInput);
+                    const snippetStart = Math.max(snippetIndex - 30, 0);
+                    const snippetEnd = Math.min(snippetIndex + 50, result.content.length);
+                    const snippet = result.content.substring(snippetStart, snippetEnd);
+                    const highlightedSnippet = snippet.replace(new RegExp(searchInput, 'gi'), match => `<strong>${match}</strong>`);
+                    resultElement.innerHTML = `<p><strong>Title:</strong> ${result.title}</p>
+                                               <p><strong>Content:</strong> ......${highlightedSnippet}...</p>
+                                               <p><a href="${result.url}">Read More</a></p>`;
+                    resultsContainer.appendChild(resultElement);
+                });
+            } else {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+    </script>
+</body>
+</html>
